@@ -4,6 +4,7 @@ main: net.fliuxx.tntTag.TntTag
 api-version: '1.21'
 authors: [ Fl1uxxNoob ]
 description: TntTag plugin
+depend: [WorldGuard]
 commands:
   tnttag:
     description: Comandi per gestire TNTTag
