@@ -24,7 +24,7 @@ public class ArenaSelectionGUI implements Listener {
     private TNTTagManager manager;
     private Inventory gui;
     private static ArenaSelectionGUI instance = null;
-    private List<Arena> arenas = new ArrayList<>();
+    private List<Arena> arenas = new ArrayList<Arena>();
     private int currentPage = 0;
     private final int ARENAS_PER_PAGE = 6; // slots 1-6
 
@@ -80,7 +80,7 @@ public class ArenaSelectionGUI implements Listener {
         meta.setDisplayName(ChatColor.AQUA + "Casuale");
         // Se selectedArena è null, mostra l'enchant per indicare la selezione
         if (manager.getSelectedArena() == null) {
-            meta.addEnchant(Enchantment.UNBREAKING, 1, true);
+            meta.addEnchant(Enchantment.DURABILITY, 1, true);
         }
         randomItem.setItemMeta(meta);
         gui.setItem(0, randomItem);
@@ -100,7 +100,7 @@ public class ArenaSelectionGUI implements Listener {
             im.setDisplayName(ChatColor.GREEN + arena.getName());
             if (manager.getSelectedArena() != null &&
                     manager.getSelectedArena().getName().equals(arena.getName())) {
-                im.addEnchant(Enchantment.UNBREAKING, 1, true);
+                im.addEnchant(Enchantment.DURABILITY, 1, true);
             }
             item.setItemMeta(im);
             gui.setItem(slot, item);
@@ -136,7 +136,7 @@ public class ArenaSelectionGUI implements Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        if (!event.getView().getTitle().equals(ChatColor.DARK_BLUE + "Seleziona Arena")) return;
+        if (!event.getInventory().getTitle().equals(ChatColor.DARK_BLUE + "Seleziona Arena")) return;
         event.setCancelled(true);
         if (!(event.getWhoClicked() instanceof Player)) return;
         Player player = (Player) event.getWhoClicked();
@@ -164,17 +164,19 @@ public class ArenaSelectionGUI implements Listener {
             }
         }
         updateItems();
-        player.updateInventory();
     }
 
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
-        if (!event.getView().getTitle().equals(ChatColor.DARK_BLUE + "Seleziona Arena")) return;
+        if (!event.getInventory().getTitle().equals(ChatColor.DARK_BLUE + "Seleziona Arena")) return;
         if (!(event.getPlayer() instanceof Player)) return;
         Player player = (Player) event.getPlayer();
         // Riapre la GUI principale con un piccolo delay per evitare conflitti con l'evento di chiusura
-        Bukkit.getScheduler().runTaskLater(TntTag.getInstance(), () -> {
-            net.fliuxx.tntTag.gui.TNTTagGUI.getInstance(manager).openGUI(player);
+        Bukkit.getScheduler().runTaskLater(TntTag.getInstance(), new Runnable() {
+            @Override
+            public void run() {
+                net.fliuxx.tntTag.gui.TNTTagGUI.getInstance(manager).openGUI(player);
+            }
         }, 1L);
     }
 }

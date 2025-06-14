@@ -47,7 +47,7 @@ public class TNTTagGUI implements Listener {
     }
 
     private void updateItems() {
-        ItemStack timeButton = new ItemStack(Material.CLOCK);
+        ItemStack timeButton = new ItemStack(Material.WATCH);
         ItemMeta timeMeta = timeButton.getItemMeta();
         timeMeta.setDisplayName(ChatColor.AQUA + "Modifica tempo round");
         int currentTime = manager.getRoundDuration();
@@ -76,7 +76,7 @@ public class TNTTagGUI implements Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        if (!event.getView().getTitle().equals(ChatColor.DARK_RED + "TNTTag GUI")) return;
+        if (!event.getInventory().getTitle().equals(ChatColor.DARK_RED + "TNTTag GUI")) return;
         event.setCancelled(true);
         if (!(event.getWhoClicked() instanceof Player)) return;
         Player player = (Player) event.getWhoClicked();
@@ -96,7 +96,6 @@ public class TNTTagGUI implements Listener {
                 player.sendMessage(ChatColor.GREEN + "Tempo del round diminuito a " + manager.getRoundDuration() + " sec.");
             }
             updateItems();
-            player.updateInventory();
         } else if (slot == 4) {
             manager.startGame();
             player.closeInventory();
