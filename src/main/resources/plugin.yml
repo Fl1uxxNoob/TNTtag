@@ -1,7 +1,7 @@
 name: TntTag
 version: '1.0'
 main: net.fliuxx.tntTag.TntTag
-api-version: '1.21'
+api-version: '1.8.8'
 authors: [ Fl1uxxNoob ]
 description: TntTag plugin
 depend: [WorldGuard]

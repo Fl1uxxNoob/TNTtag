@@ -1,6 +1,7 @@
 package net.fliuxx.tntTag.manager;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 
@@ -28,7 +29,7 @@ public class TNTTagManager {
     private int roundTimeRemaining;
     private int roundDuration = 60; // Tempo di default per il round (modificabile via GUI)
     private boolean gameActive = false;
-    private List<Player> activePlayers = new ArrayList<>();
+    private List<Player> activePlayers = new ArrayList<Player>();
     private final Random random = new Random();
     // Flag per indicare che l'esplosione TNTTag è in corso (per annullare i danni)
     private boolean explosionInProgress = false;
@@ -42,9 +43,10 @@ public class TNTTagManager {
             Bukkit.getLogger().info("Il gioco è già in corso.");
             return;
         }
-        // Controlla che ci siano almeno 2 giocatori online
-        if (Bukkit.getOnlinePlayers().size() < 2) {
-            for (Player p : Bukkit.getOnlinePlayers()) {
+        // Controlla che ci siano almeno 2 giocatori online (compatibilità 1.8.8)
+        Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
+        if (onlinePlayers.size() < 2) {
+            for (Player p : onlinePlayers) {
                 p.sendMessage(ChatColor.RED + "Non ci sono abbastanza giocatori online per iniziare la partita.");
             }
             return;
@@ -52,27 +54,28 @@ public class TNTTagManager {
         internalStartGameCountdown();
     }
 
-
     // Countdown di 10 secondi prima di avviare la partita
     private void internalStartGameCountdown() {
         // Aggiorna la lista dei giocatori attivi prima di iniziare il countdown
-        activePlayers = new ArrayList<>(Bukkit.getOnlinePlayers());
+        activePlayers = new ArrayList<Player>(Bukkit.getOnlinePlayers());
         teleportAllPlayersToArena(); // Ora activePlayers contiene i giocatori online
         countdownActive = true;
         new BukkitRunnable() {
             int countdown = 10;
             @Override
             public void run() {
-                if (Bukkit.getOnlinePlayers().size() < 2) {
-                    for (Player p : Bukkit.getOnlinePlayers()) {
+                Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
+                if (onlinePlayers.size() < 2) {
+                    for (Player p : onlinePlayers) {
                         p.sendMessage(ChatColor.RED + "Non ci sono abbastanza giocatori online per avviare TNTTag.");
                     }
                     countdownActive = false;
                     cancel();
                     return;
                 }
-                for (Player p : Bukkit.getOnlinePlayers()) {
-                    p.sendTitle(ChatColor.GOLD + "Avvio TNTTag in " + countdown + "...", "", 10, 20, 10);
+                for (Player p : onlinePlayers) {
+                    // Compatibilità 1.8.8 - usa sendTitle con reflection o metodo alternativo
+                    p.sendMessage(ChatColor.GOLD + "Avvio TNTTag in " + countdown + "...");
                 }
                 countdown--;
                 if (countdown < 0) {
@@ -94,7 +97,7 @@ public class TNTTagManager {
 
     // Metodo interno che avvia la partita dopo il countdown
     private void internalStartGame() {
-        activePlayers = new ArrayList<>(Bukkit.getOnlinePlayers());
+        activePlayers = new ArrayList<Player>(Bukkit.getOnlinePlayers());
         if (activePlayers.size() < 2) {
             Bukkit.getLogger().info("Non ci sono abbastanza giocatori online per iniziare la partita.");
             return;
@@ -120,7 +123,7 @@ public class TNTTagManager {
         }
         // Se non è stato scelto, carica una casuale dal config
         FileConfiguration config = TntTag.getInstance().getConfig();
-        List<Arena> arenaList = new ArrayList<>();
+        List<Arena> arenaList = new ArrayList<Arena>();
         if (config.isConfigurationSection("arenas")) {
             for (String key : config.getConfigurationSection("arenas").getKeys(false)) {
                 String world = config.getString("arenas." + key + ".world");
@@ -159,7 +162,7 @@ public class TNTTagManager {
         ItemStack tntItem = new ItemStack(Material.TNT);
         ItemMeta meta = tntItem.getItemMeta();
         meta.setDisplayName(ChatColor.RED + "TNTTag");
-        meta.addEnchant(Enchantment.UNBREAKING, 1, true); // effetto brillante
+        meta.addEnchant(Enchantment.DURABILITY, 1, true); // effetto brillante
         tntItem.setItemMeta(meta);
         p.getInventory().setItem(0, tntItem);
         p.getInventory().setHelmet(tntItem.clone());
@@ -211,18 +214,21 @@ public class TNTTagManager {
 
     // Avvia il timer globale del round
     private void startRoundTimer() {
-        roundTask = Bukkit.getScheduler().runTaskTimer(TntTag.getInstance(), () -> {
-            if (roundTimeRemaining <= 0) {
-                eliminateCurrentHolder();
-            } else {
-                // Aggiorna la scoreboard ad ogni tick
-                if (scoreboardManager != null) {
-                    scoreboardManager.updateScoreboard(roundTimeRemaining, activePlayers.size());
+        roundTask = Bukkit.getScheduler().runTaskTimer(TntTag.getInstance(), new Runnable() {
+            @Override
+            public void run() {
+                if (roundTimeRemaining <= 0) {
+                    eliminateCurrentHolder();
+                } else {
+                    // Aggiorna la scoreboard ad ogni tick
+                    if (scoreboardManager != null) {
+                        scoreboardManager.updateScoreboard(roundTimeRemaining, activePlayers.size());
+                    }
+                    if (currentHolder != null && currentHolder.isOnline()) {
+                        currentHolder.sendMessage(ChatColor.GRAY + "Tempo rimanente per passare la TNT: " + ChatColor.RED + roundTimeRemaining + ChatColor.GRAY + " secondi");
+                    }
+                    roundTimeRemaining--;
                 }
-                if (currentHolder != null && currentHolder.isOnline()) {
-                    currentHolder.sendMessage(ChatColor.GRAY + "Tempo rimanente per passare la TNT: " + ChatColor.RED + roundTimeRemaining + ChatColor.GRAY + " secondi");
-                }
-                roundTimeRemaining--;
             }
         }, 20, 20);
     }
@@ -235,12 +241,18 @@ public class TNTTagManager {
             currentHolder.getWorld().createExplosion(loc, 4.0F, false, false);
             currentHolder.sendMessage(ChatColor.RED + "BOOM! La TNT è esplosa su di te!");
             broadcast(ChatColor.RED + "Il giocatore " + ChatColor.DARK_RED +  currentHolder.getName() + ChatColor.RED + " è stato eliminato!");
-            currentHolder.sendTitle(ChatColor.RED + "" + ChatColor.BOLD + "SEI MORTO", "", 10, 40, 10);
+            // Compatibilità 1.8.8 - sendTitle non disponibile
+            currentHolder.sendMessage(ChatColor.RED + "" + ChatColor.BOLD + "SEI MORTO");
             removeTNT(currentHolder);
             currentHolder.getInventory().clear();
             activePlayers.remove(currentHolder);
             teleportToSpawn(currentHolder);
-            Bukkit.getScheduler().runTaskLater(TntTag.getInstance(), () -> explosionInProgress = false, 1L);
+            Bukkit.getScheduler().runTaskLater(TntTag.getInstance(), new Runnable() {
+                @Override
+                public void run() {
+                    explosionInProgress = false;
+                }
+            }, 1L);
         }
         cancelRoundTimer();
         if (activePlayers.size() > 1) {
@@ -255,7 +267,8 @@ public class TNTTagManager {
             broadcast(ChatColor.GREEN + "Il vincitore è " + ChatColor.YELLOW + winner.getName() + ChatColor.GREEN + "!");
             winner.getInventory().clear();
             teleportToSpawn(winner);
-            winner.sendTitle(ChatColor.YELLOW + "HAI VINTO!", "", 10, 40, 10);
+            // Compatibilità 1.8.8 - sendTitle non disponibile
+            winner.sendMessage(ChatColor.YELLOW + "HAI VINTO!");
             stopGame();
         } else {
             broadcast(ChatColor.RED + "Nessun giocatore rimasto, partita terminata!");
@@ -277,7 +290,7 @@ public class TNTTagManager {
         cancelRoundTimer();
         broadcast(ChatColor.RED + "La partita di TNTTag è terminata!");
         // Rimuovo gli effetti speed da tutti i giocatori in gioco
-        for (Player p : new ArrayList<>(activePlayers)) {
+        for (Player p : new ArrayList<Player>(activePlayers)) {
             p.getInventory().clear();
             p.removePotionEffect(PotionEffectType.SPEED);
             p.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
@@ -291,7 +304,6 @@ public class TNTTagManager {
         activePlayers.clear();
         currentHolder = null;
     }
-
 
     public boolean isGameActive() {
         return gameActive;
@@ -324,7 +336,8 @@ public class TNTTagManager {
                         broadcast(ChatColor.GREEN + "Il vincitore è " + ChatColor.YELLOW +  winner.getName() + ChatColor.GREEN + "!");
                         winner.getInventory().clear();
                         teleportToSpawn(winner);
-                        winner.sendTitle(ChatColor.YELLOW + "HAI VINTO!", "", 10, 40, 10);
+                        // Compatibilità 1.8.8 - sendTitle non disponibile
+                        winner.sendMessage(ChatColor.YELLOW + "HAI VINTO!");
                         stopGame();
                         return;
                     } else {
@@ -343,7 +356,8 @@ public class TNTTagManager {
                 broadcast(ChatColor.GREEN + "Il vincitore è " + ChatColor.YELLOW +  winner.getName() + ChatColor.GREEN + "!");
                 winner.getInventory().clear();
                 teleportToSpawn(winner);
-                winner.sendTitle(ChatColor.YELLOW + "HAI VINTO!", "", 10, 40, 10);
+                // Compatibilità 1.8.8 - sendTitle non disponibile
+                winner.sendMessage(ChatColor.YELLOW + "HAI VINTO!");
                 stopGame();
             }
         }

@@ -14,7 +14,8 @@ public class TNTTagScoreboardManager {
         ScoreboardManager sm = Bukkit.getScoreboardManager();
         board = sm.getNewScoreboard();
         // Il titolo della scoreboard: "TNT TAG" in rosso chiaro
-        objective = board.registerNewObjective("TNTTagObj", "dummy", ChatColor.RED + "TNT TAG");
+        objective = board.registerNewObjective("TNTTagObj", "dummy");
+        objective.setDisplayName(ChatColor.RED + "TNT TAG");
         objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
         // Creiamo due team fissi per il timer e per il conteggio delle vite
