@@ -238,7 +238,8 @@ public class TNTTagManager {
         if (currentHolder != null && currentHolder.isOnline()) {
             explosionInProgress = true;
             Location loc = currentHolder.getLocation();
-            currentHolder.getWorld().createExplosion(loc, 4.0F, false, false);
+            // Compatibilità 1.8.8: usa le coordinate invece di Location object
+            loc.getWorld().createExplosion(loc.getX(), loc.getY(), loc.getZ(), 4.0F);
             currentHolder.sendMessage(ChatColor.RED + "BOOM! La TNT è esplosa su di te!");
             broadcast(ChatColor.RED + "Il giocatore " + ChatColor.DARK_RED +  currentHolder.getName() + ChatColor.RED + " è stato eliminato!");
             // Compatibilità 1.8.8 - sendTitle non disponibile
