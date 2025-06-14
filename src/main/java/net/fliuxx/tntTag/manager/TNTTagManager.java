@@ -168,12 +168,14 @@ public class TNTTagManager {
         p.getInventory().setHelmet(tntItem.clone());
     }
 
-    // Rimuove la TNT dal giocatore (slot 0 e casco)
+    // Rimuove la TNT dal giocatore (slot 0 e casco) - CORRETTO
     private void removeTNT(Player p) {
+        // Rimuovi dal slot 0
         ItemStack item = p.getInventory().getItem(0);
         if (isTNTTagItem(item)) {
             p.getInventory().setItem(0, null);
         }
+        // Rimuovi dal casco - CORREZIONE: controllo e rimozione corretti
         ItemStack helmet = p.getInventory().getHelmet();
         if (isTNTTagItem(helmet)) {
             p.getInventory().setHelmet(null);
@@ -184,7 +186,8 @@ public class TNTTagManager {
         return item != null
                 && item.getType() == Material.TNT
                 && item.hasItemMeta()
-                && "TNTTag".equals(item.getItemMeta().getDisplayName());
+                && item.getItemMeta().hasDisplayName()
+                && (ChatColor.RED + "TNTTag").equals(item.getItemMeta().getDisplayName());
     }
 
     // Aggiorna gli effetti di velocità: tutti i giocatori ottengono Speed I, mentre il portatore Speed II.
@@ -199,14 +202,21 @@ public class TNTTagManager {
         }
     }
 
-    // Passa la TNT al giocatore target senza resettare il timer del round;
+    // Passa la TNT al giocatore target senza resettare il timer del round - CORRETTO
     public void passTNT(Player newHolder) {
         if (!gameActive) return;
         if (currentHolder != null && currentHolder.equals(newHolder)) return;
         if (!activePlayers.contains(newHolder)) return;
+
         broadcast(ChatColor.GRAY + "La TNT è passata da " + ChatColor.RED + currentHolder.getName() + ChatColor.GRAY + " a " + ChatColor.RED + newHolder.getName());
-        currentHolder.getInventory().clear();
-        removeTNT(currentHolder);
+
+        // CORREZIONE: Prima rimuovi la TNT dal vecchio holder
+        if (currentHolder != null) {
+            removeTNT(currentHolder);
+            currentHolder.getInventory().clear();
+        }
+
+        // Poi assegna al nuovo holder
         currentHolder = newHolder;
         assignTNT(currentHolder);
         updatePlayerEffects();
@@ -220,8 +230,8 @@ public class TNTTagManager {
                 if (roundTimeRemaining <= 0) {
                     eliminateCurrentHolder();
                 } else {
-                    // Aggiorna la scoreboard ad ogni tick
-                    if (scoreboardManager != null) {
+                    // Aggiorna la scoreboard ad ogni tick - CORREZIONE: controllo null safety
+                    if (scoreboardManager != null && gameActive) {
                         scoreboardManager.updateScoreboard(roundTimeRemaining, activePlayers.size());
                     }
                     if (currentHolder != null && currentHolder.isOnline()) {
@@ -246,6 +256,8 @@ public class TNTTagManager {
             currentHolder.sendMessage(ChatColor.RED + "" + ChatColor.BOLD + "SEI MORTO");
             removeTNT(currentHolder);
             currentHolder.getInventory().clear();
+            // CORREZIONE: Reset scoreboard per il giocatore eliminato
+            currentHolder.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
             activePlayers.remove(currentHolder);
             teleportToSpawn(currentHolder);
             Bukkit.getScheduler().runTaskLater(TntTag.getInstance(), new Runnable() {
@@ -267,6 +279,8 @@ public class TNTTagManager {
             Player winner = activePlayers.get(0);
             broadcast(ChatColor.GREEN + "Il vincitore è " + ChatColor.YELLOW + winner.getName() + ChatColor.GREEN + "!");
             winner.getInventory().clear();
+            // CORREZIONE: Reset scoreboard per il vincitore
+            winner.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
             teleportToSpawn(winner);
             // Compatibilità 1.8.8 - sendTitle non disponibile
             winner.sendMessage(ChatColor.YELLOW + "HAI VINTO!");
@@ -285,25 +299,31 @@ public class TNTTagManager {
         }
     }
 
-    // Ferma il gioco: svuota l'inventario di tutti e teletrasporta allo spawn
+    // Ferma il gioco: svuota l'inventario di tutti e teletrasporta allo spawn - CORRETTO
     public void stopGame() {
         if (!gameActive) return;
         cancelRoundTimer();
         broadcast(ChatColor.RED + "La partita di TNTTag è terminata!");
-        // Rimuovo gli effetti speed da tutti i giocatori in gioco
+
+        // CORREZIONE: Reset completo per tutti i giocatori attivi
         for (Player p : new ArrayList<Player>(activePlayers)) {
             p.getInventory().clear();
             p.removePotionEffect(PotionEffectType.SPEED);
+            // CORREZIONE: Assicurati che la scoreboard venga resettata
             p.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
             teleportToSpawn(p);
         }
+
         // Per sicurezza, rimuovo anche da eventuali altri giocatori in game (opzionale)
         for (Player p : Bukkit.getOnlinePlayers()) {
             p.removePotionEffect(PotionEffectType.SPEED);
         }
+
         gameActive = false;
         activePlayers.clear();
         currentHolder = null;
+        // CORREZIONE: Reset del scoreboardManager
+        scoreboardManager = null;
     }
 
     public boolean isGameActive() {
@@ -322,20 +342,25 @@ public class TNTTagManager {
         return explosionInProgress;
     }
 
-    // Gestisce la rimozione di un giocatore (per uscita o cambio mondo)
+    // Gestisce la rimozione di un giocatore (per uscita o cambio mondo) - CORRETTO
     public void removePlayer(Player p) {
         if (activePlayers.contains(p)) {
             activePlayers.remove(p);
+            // CORREZIONE: Reset scoreboard quando il giocatore viene rimosso
             p.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
+
             if (p.equals(currentHolder)) {
                 removeTNT(p);
                 broadcast(ChatColor.GRAY + "Il giocatore " + ChatColor.DARK_RED + p.getName() + ChatColor.RED + " è uscito ed era il portatore della TNT.");
                 cancelRoundTimer();
+                currentHolder = null; // CORREZIONE: Reset currentHolder
+
                 if (!activePlayers.isEmpty()) {
                     if (activePlayers.size() == 1) {
                         Player winner = activePlayers.get(0);
                         broadcast(ChatColor.GREEN + "Il vincitore è " + ChatColor.YELLOW +  winner.getName() + ChatColor.GREEN + "!");
                         winner.getInventory().clear();
+                        winner.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
                         teleportToSpawn(winner);
                         // Compatibilità 1.8.8 - sendTitle non disponibile
                         winner.sendMessage(ChatColor.YELLOW + "HAI VINTO!");
@@ -356,6 +381,7 @@ public class TNTTagManager {
                 Player winner = activePlayers.get(0);
                 broadcast(ChatColor.GREEN + "Il vincitore è " + ChatColor.YELLOW +  winner.getName() + ChatColor.GREEN + "!");
                 winner.getInventory().clear();
+                winner.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
                 teleportToSpawn(winner);
                 // Compatibilità 1.8.8 - sendTitle non disponibile
                 winner.sendMessage(ChatColor.YELLOW + "HAI VINTO!");

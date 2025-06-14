@@ -70,7 +70,7 @@ public class ArenaWorldGuardManager {
                     continue;
                 }
 
-                // Imposta i flag utilizzando l'API di WorldGuard 6.x per 1.8.8
+                //Imposta i flag utilizzando l'API di WorldGuard 6.x per 1.8.8
                 global.setFlag(DefaultFlag.BUILD, StateFlag.State.DENY);
                 global.setFlag(DefaultFlag.BLOCK_PLACE, StateFlag.State.DENY);
                 global.setFlag(DefaultFlag.BLOCK_BREAK, StateFlag.State.DENY);
@@ -89,22 +89,27 @@ public class ArenaWorldGuardManager {
                 global.setFlag(DefaultFlag.MOB_SPAWNING, StateFlag.State.DENY);
                 global.setFlag(DefaultFlag.FALL_DAMAGE, StateFlag.State.DENY);
 
-                // Imposta PvP su ALLOW per consentire il combattimento
+                //Imposta PvP su ALLOW per consentire il combattimento
                 global.setFlag(DefaultFlag.PVP, StateFlag.State.ALLOW);
 
                 Bukkit.getLogger().info("[TntTag] Aggiornati i flag global per il mondo " + world.getName());
 
             } catch (Exception e) {
                 Bukkit.getLogger().severe("[TntTag] Errore nell'applicazione dei flag per il mondo " + world.getName() + ": " + e.getMessage());
+                e.printStackTrace();
             }
 
-            // Esegui i comandi per impostare le gamerule
+            // CORREZIONE: Esegui i comandi per impostare le gamerule per ogni mondo specifico
             try {
-                // Usa i comandi vanilla invece di Multiverse per maggiore compatibilità
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "gamerule doDaylightCycle false");
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "gamerule doWeatherCycle false");
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "gamerule doMobSpawning false");
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "difficulty peaceful");
+                // Usa i comandi specifici per ogni mondo
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "gamerule doDaylightCycle false " + world.getName());
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "gamerule doWeatherCycle false " + world.getName());
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "gamerule doMobSpawning false " + world.getName());
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "gamerule keepInventory false " + world.getName());
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "gamerule doFireTick false " + world.getName());
+
+                // Imposta la difficoltà su peaceful per il mondo
+                world.setDifficulty(org.bukkit.Difficulty.PEACEFUL);
 
                 Bukkit.getLogger().info("[TntTag] Gamerule applicate per il mondo " + world.getName());
             } catch (Exception e) {
