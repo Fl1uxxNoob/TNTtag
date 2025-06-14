@@ -1,86 +1,48 @@
 package net.fliuxx.tntTag.worldguard;
 
-import com.sk89q.worldedit.bukkit.BukkitAdapter;
-import com.sk89q.worldguard.WorldGuard;
+import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
+import com.sk89q.worldguard.protection.flags.DefaultFlag;
 import com.sk89q.worldguard.protection.flags.StateFlag;
-import com.sk89q.worldguard.protection.flags.Flag;
-import com.sk89q.worldguard.protection.flags.registry.FlagRegistry;
-import com.sk89q.worldguard.protection.flags.registry.FlagConflictException;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import net.fliuxx.tntTag.TntTag;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.plugin.Plugin;
 
 import java.util.HashSet;
 import java.util.Set;
 
 public class ArenaWorldGuardManager {
 
-    // I nomi dei flag da impostare (tutti su DENY)
-    private static final String[] FLAG_NAMES = {
-            "build",
-            "block-place",
-            "block-break",
-            "use",
-            "interact",
-            "sleep",
-            "chest-access",
-            "use-anvil",
-            "enderman-grief",
-            "item-drop",
-            "item-pickup",
-            "exp-drops",
-            "item-frame-rotation",
-            "mob-damage",
-            "lava-fire",
-            "mob-spawning",
-            "fall-damage"
-    };
+    private static WorldGuardPlugin worldGuard;
+
+    // Inizializza WorldGuard
+    private static WorldGuardPlugin getWorldGuard() {
+        if (worldGuard == null) {
+            Plugin plugin = Bukkit.getServer().getPluginManager().getPlugin("WorldGuard");
+            if (plugin == null || !(plugin instanceof WorldGuardPlugin)) {
+                Bukkit.getLogger().severe("[TntTag] WorldGuard non trovato!");
+                return null;
+            }
+            worldGuard = (WorldGuardPlugin) plugin;
+        }
+        return worldGuard;
+    }
 
     // Metodo principale: per ogni arena (definita in config.yml) si controlla la regione globale e si applicano i flag
     public static void checkAndApplySettings() {
+        WorldGuardPlugin wg = getWorldGuard();
+        if (wg == null) {
+            Bukkit.getLogger().severe("[TntTag] Impossibile accedere a WorldGuard!");
+            return;
+        }
+
         FileConfiguration config = TntTag.getInstance().getConfig();
         if (!config.isConfigurationSection("arenas")) {
             Bukkit.getLogger().info("[TntTag] Nessuna arena definita nel config.yml.");
             return;
-        }
-        // Prepara il flag registry
-        FlagRegistry registry = WorldGuard.getInstance().getFlagRegistry();
-        // Registra i flag della lista, se non esistono
-        for (String flagName : FLAG_NAMES) {
-            Flag<?> flag = null;
-            try {
-                flag = registry.get(flagName);
-            } catch (Exception e) {
-                // ignora
-            }
-            if (flag == null) {
-                StateFlag newFlag = new StateFlag(flagName, true);
-                try {
-                    registry.register(newFlag);
-                    Bukkit.getLogger().info("[TntTag] Registrato flag personalizzato: " + flagName);
-                } catch (FlagConflictException e) {
-                    Bukkit.getLogger().severe("[TntTag] Conflitto nella registrazione del flag: " + flagName);
-                }
-            }
-        }
-        // Gestione della flag "pvp": se non è registrata, la registriamo
-        Flag<?> pvpFlagGeneric = null;
-        try {
-            pvpFlagGeneric = registry.get("pvp");
-        } catch (Exception e) {
-            // ignora
-        }
-        if (pvpFlagGeneric == null) {
-            StateFlag pvpFlag = new StateFlag("pvp", true);
-            try {
-                registry.register(pvpFlag);
-                Bukkit.getLogger().info("[TntTag] Registrato flag personalizzato: pvp");
-            } catch (FlagConflictException e) {
-                Bukkit.getLogger().severe("[TntTag] Conflitto nella registrazione del flag: pvp");
-            }
         }
 
         // Raccogli i mondi in cui sono definite le arene, evitando duplicati
@@ -92,38 +54,62 @@ public class ArenaWorldGuardManager {
                 arenaWorlds.add(world);
             }
         }
+
         // Per ogni mondo, controlla la regione __global__ e applica i flag
         for (World world : arenaWorlds) {
-            RegionManager regionManager = WorldGuard.getInstance().getPlatform().getRegionContainer().get(BukkitAdapter.adapt(world));
-            if (regionManager == null) continue;
-            ProtectedRegion global = regionManager.getRegion("__global__");
-            if (global == null) continue;
-            // Imposta tutti i flag della lista su DENY
-            for (String flagName : FLAG_NAMES) {
-                @SuppressWarnings("unchecked")
-                Flag<StateFlag.State> flag = (Flag<StateFlag.State>) registry.get(flagName);
-                if (flag != null) {
-                    global.setFlag(flag, StateFlag.State.DENY);
-                }
-            }
-            // Imposta la flag "pvp" su ALLOW (ovvero true, per consentire il PvP)
-            @SuppressWarnings("unchecked")
-            Flag<StateFlag.State> pvpFlag = (Flag<StateFlag.State>) registry.get("pvp");
-            if (pvpFlag != null) {
-                global.setFlag(pvpFlag, StateFlag.State.ALLOW);
-            }
-            // Salva le modifiche nella regione
             try {
-                regionManager.save();
+                RegionManager regionManager = wg.getRegionManager(world);
+                if (regionManager == null) {
+                    Bukkit.getLogger().warning("[TntTag] Impossibile ottenere RegionManager per il mondo: " + world.getName());
+                    continue;
+                }
+
+                ProtectedRegion global = regionManager.getRegion("__global__");
+                if (global == null) {
+                    Bukkit.getLogger().warning("[TntTag] Regione __global__ non trovata nel mondo: " + world.getName());
+                    continue;
+                }
+
+                // Imposta i flag utilizzando l'API di WorldGuard 6.x per 1.8.8
+                global.setFlag(DefaultFlag.BUILD, StateFlag.State.DENY);
+                global.setFlag(DefaultFlag.BLOCK_PLACE, StateFlag.State.DENY);
+                global.setFlag(DefaultFlag.BLOCK_BREAK, StateFlag.State.DENY);
+                global.setFlag(DefaultFlag.USE, StateFlag.State.DENY);
+                global.setFlag(DefaultFlag.INTERACT, StateFlag.State.DENY);
+                global.setFlag(DefaultFlag.SLEEP, StateFlag.State.DENY);
+                global.setFlag(DefaultFlag.CHEST_ACCESS, StateFlag.State.DENY);
+                //global.setFlag(DefaultFlag.USE_ANVIL, StateFlag.State.DENY);
+                //global.setFlag(DefaultFlag.ENDERMAN_GRIEF, StateFlag.State.DENY);
+                global.setFlag(DefaultFlag.ITEM_DROP, StateFlag.State.DENY);
+                global.setFlag(DefaultFlag.ITEM_PICKUP, StateFlag.State.DENY);
+                global.setFlag(DefaultFlag.EXP_DROPS, StateFlag.State.DENY);
+                //global.setFlag(DefaultFlag.ITEM_FRAME_ROTATION, StateFlag.State.DENY);
+                global.setFlag(DefaultFlag.MOB_DAMAGE, StateFlag.State.DENY);
+                global.setFlag(DefaultFlag.LAVA_FIRE, StateFlag.State.DENY);
+                global.setFlag(DefaultFlag.MOB_SPAWNING, StateFlag.State.DENY);
+                global.setFlag(DefaultFlag.FALL_DAMAGE, StateFlag.State.DENY);
+
+                // Imposta PvP su ALLOW per consentire il combattimento
+                global.setFlag(DefaultFlag.PVP, StateFlag.State.ALLOW);
+
                 Bukkit.getLogger().info("[TntTag] Aggiornati i flag global per il mondo " + world.getName());
+
             } catch (Exception e) {
-                Bukkit.getLogger().severe("[TntTag] Errore nel salvataggio dei flag per il mondo " + world.getName());
+                Bukkit.getLogger().severe("[TntTag] Errore nell'applicazione dei flag per il mondo " + world.getName() + ": " + e.getMessage());
             }
+
             // Esegui i comandi per impostare le gamerule
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mv gamerule doDaylightCycle false " + world.getName());
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mv gamerule doWeatherCycle false " + world.getName());
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mv gamerule doMobSpawning false " + world.getName());
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mvm set difficulty peaceful " + world.getName());
+            try {
+                // Usa i comandi vanilla invece di Multiverse per maggiore compatibilità
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "gamerule doDaylightCycle false");
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "gamerule doWeatherCycle false");
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "gamerule doMobSpawning false");
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "difficulty peaceful");
+
+                Bukkit.getLogger().info("[TntTag] Gamerule applicate per il mondo " + world.getName());
+            } catch (Exception e) {
+                Bukkit.getLogger().warning("[TntTag] Errore nell'applicazione delle gamerule per il mondo " + world.getName() + ": " + e.getMessage());
+            }
         }
     }
 }
