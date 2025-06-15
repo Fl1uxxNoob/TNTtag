@@ -9,6 +9,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.List;
+import java.util.ArrayList;
 
 public class MessageManager {
     private static MessageManager instance;
@@ -74,6 +76,24 @@ public class MessageManager {
         return message;
     }
 
+    public List<String> getMessageList(String path) {
+        List<String> messages = messagesConfig.getStringList(path);
+        List<String> coloredMessages = new ArrayList<String>();
+        for (String message : messages) {
+            coloredMessages.add(ChatColor.translateAlternateColorCodes('&', message));
+        }
+        return coloredMessages;
+    }
+
+    public List<String> getMessageList(String path, String placeholder, String value) {
+        List<String> messages = getMessageList(path);
+        List<String> processedMessages = new ArrayList<String>();
+        for (String message : messages) {
+            processedMessages.add(message.replace("{" + placeholder + "}", value));
+        }
+        return processedMessages;
+    }
+
     // Metodi specifici per la scoreboard
     public String getScoreboardTitle() {
         return getMessage("scoreboard.title");
@@ -93,5 +113,96 @@ public class MessageManager {
 
     public String getScoreboardPlayersSuffix(int count) {
         return getMessage("scoreboard.players_suffix", "count", String.valueOf(count));
+    }
+
+    // Metodi specifici per la GUI principale
+    public String getMainGUITitle() {
+        return getMessage("gui.main.title");
+    }
+
+    public String getTimeButtonName() {
+        return getMessage("gui.main.time_button.name");
+    }
+
+    public List<String> getTimeButtonLore(int time) {
+        return getMessageList("gui.main.time_button.lore", "time", String.valueOf(time));
+    }
+
+    public String getStartButtonName() {
+        return getMessage("gui.main.start_button.name");
+    }
+
+    public List<String> getStartButtonLore() {
+        return getMessageList("gui.main.start_button.lore");
+    }
+
+    public String getArenaButtonName() {
+        return getMessage("gui.main.arena_button.name");
+    }
+
+    public List<String> getArenaButtonLore() {
+        return getMessageList("gui.main.arena_button.lore");
+    }
+
+    // Metodi specifici per la GUI di selezione arena
+    public String getArenaSelectionGUITitle() {
+        return getMessage("gui.arena_selection.title");
+    }
+
+    public String getRandomOptionName() {
+        return getMessage("gui.arena_selection.random_option.name");
+    }
+
+    public List<String> getRandomOptionLore() {
+        return getMessageList("gui.arena_selection.random_option.lore");
+    }
+
+    public String getArenaItemName(String arenaName) {
+        return getMessage("gui.arena_selection.arena_item.name", "arena_name", arenaName);
+    }
+
+    public List<String> getArenaItemLore() {
+        return getMessageList("gui.arena_selection.arena_item.lore");
+    }
+
+    public String getPreviousPageName() {
+        return getMessage("gui.arena_selection.navigation.previous_page.name");
+    }
+
+    public List<String> getPreviousPageLore() {
+        return getMessageList("gui.arena_selection.navigation.previous_page.lore");
+    }
+
+    public String getNextPageName() {
+        return getMessage("gui.arena_selection.navigation.next_page.name");
+    }
+
+    public List<String> getNextPageLore() {
+        return getMessageList("gui.arena_selection.navigation.next_page.lore");
+    }
+
+    // Metodi per i messaggi della GUI
+    public String getTimeIncreasedMessage(int time) {
+        return getMessage("messages.gui.time_increased", "time", String.valueOf(time));
+    }
+
+    public String getTimeDecreasedMessage(int time) {
+        return getMessage("messages.gui.time_decreased", "time", String.valueOf(time));
+    }
+
+    public String getArenaSelectedMessage(String arenaName) {
+        return getMessage("messages.gui.arena_selected", "arena_name", arenaName);
+    }
+
+    public String getRandomSelectedMessage() {
+        return getMessage("messages.gui.random_selected");
+    }
+
+    public String getCannotUseNowMessage() {
+        return getMessage("messages.gui.cannot_use_now");
+    }
+
+    public String getGameActiveGUIBlockedMessage() {
+        return getMessage("messages.gui.game_active_gui_blocked");
     }
 }

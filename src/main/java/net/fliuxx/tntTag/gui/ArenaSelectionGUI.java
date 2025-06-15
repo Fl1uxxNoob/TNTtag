@@ -1,10 +1,10 @@
 package net.fliuxx.tntTag.gui;
 
+import net.fliuxx.tntTag.manager.MessageManager;
 import net.fliuxx.tntTag.manager.TNTTagManager;
 import net.fliuxx.tntTag.TntTag;
 import net.fliuxx.tntTag.arena.Arena;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.enchantments.Enchantment;
@@ -22,6 +22,7 @@ import java.util.List;
 
 public class ArenaSelectionGUI implements Listener {
     private TNTTagManager manager;
+    private MessageManager messageManager;
     private Inventory gui;
     private static ArenaSelectionGUI instance = null;
     private List<Arena> arenas = new ArrayList<Arena>();
@@ -30,6 +31,7 @@ public class ArenaSelectionGUI implements Listener {
 
     private ArenaSelectionGUI(TNTTagManager manager) {
         this.manager = manager;
+        this.messageManager = MessageManager.getInstance();
         loadArenas();
         createGUI();
     }
@@ -69,7 +71,7 @@ public class ArenaSelectionGUI implements Listener {
     }
 
     private void createGUI() {
-        gui = Bukkit.createInventory(null, 9, ChatColor.DARK_BLUE + "Seleziona Arena");
+        gui = Bukkit.createInventory(null, 9, messageManager.getArenaSelectionGUITitle());
         updateItems();
     }
 
@@ -77,7 +79,8 @@ public class ArenaSelectionGUI implements Listener {
         // Slot 0: Opzione "Casuale"
         ItemStack randomItem = new ItemStack(Material.NETHER_STAR);
         ItemMeta meta = randomItem.getItemMeta();
-        meta.setDisplayName(ChatColor.AQUA + "Casuale");
+        meta.setDisplayName(messageManager.getRandomOptionName());
+        meta.setLore(messageManager.getRandomOptionLore());
         // Se selectedArena è null, mostra l'enchant per indicare la selezione
         if (manager.getSelectedArena() == null) {
             meta.addEnchant(Enchantment.DURABILITY, 1, true);
@@ -97,7 +100,8 @@ public class ArenaSelectionGUI implements Listener {
             Arena arena = arenas.get(i);
             ItemStack item = new ItemStack(Material.BEACON);
             ItemMeta im = item.getItemMeta();
-            im.setDisplayName(ChatColor.GREEN + arena.getName());
+            im.setDisplayName(messageManager.getArenaItemName(arena.getName()));
+            im.setLore(messageManager.getArenaItemLore());
             if (manager.getSelectedArena() != null &&
                     manager.getSelectedArena().getName().equals(arena.getName())) {
                 im.addEnchant(Enchantment.DURABILITY, 1, true);
@@ -111,7 +115,8 @@ public class ArenaSelectionGUI implements Listener {
         if (currentPage > 0) {
             ItemStack prev = new ItemStack(Material.ARROW);
             ItemMeta prevMeta = prev.getItemMeta();
-            prevMeta.setDisplayName(ChatColor.YELLOW + "Pagina precedente");
+            prevMeta.setDisplayName(messageManager.getPreviousPageName());
+            prevMeta.setLore(messageManager.getPreviousPageLore());
             prev.setItemMeta(prevMeta);
             gui.setItem(7, prev);
         } else {
@@ -122,7 +127,8 @@ public class ArenaSelectionGUI implements Listener {
         if ((currentPage + 1) * ARENAS_PER_PAGE < arenas.size()) {
             ItemStack next = new ItemStack(Material.ARROW);
             ItemMeta nextMeta = next.getItemMeta();
-            nextMeta.setDisplayName(ChatColor.YELLOW + "Pagina successiva");
+            nextMeta.setDisplayName(messageManager.getNextPageName());
+            nextMeta.setLore(messageManager.getNextPageLore());
             next.setItemMeta(nextMeta);
             gui.setItem(8, next);
         } else {
@@ -136,21 +142,22 @@ public class ArenaSelectionGUI implements Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        if (!event.getInventory().getTitle().equals(ChatColor.DARK_BLUE + "Seleziona Arena")) return;
+        if (!event.getInventory().getTitle().equals(messageManager.getArenaSelectionGUITitle())) return;
         event.setCancelled(true);
         if (!(event.getWhoClicked() instanceof Player)) return;
         Player player = (Player) event.getWhoClicked();
         int slot = event.getRawSlot();
+
         if (slot == 0) {
             // L'opzione "Casuale": non impostiamo nessuna arena (rimane null)
             manager.setSelectedArena(null);
-            player.sendMessage(ChatColor.GREEN + "Hai selezionato l'opzione 'Casuale'.");
+            player.sendMessage(messageManager.getRandomSelectedMessage());
         } else if (slot >= 1 && slot <= 6) {
             int index = currentPage * ARENAS_PER_PAGE + (slot - 1);
             if (index < arenas.size()) {
                 Arena arena = arenas.get(index);
                 manager.setSelectedArena(arena);
-                player.sendMessage(ChatColor.GREEN + "Hai selezionato l'arena: " + arena.getName());
+                player.sendMessage(messageManager.getArenaSelectedMessage(arena.getName()));
             }
         } else if (slot == 7) {
             // Pulsante per pagina precedente
@@ -168,7 +175,7 @@ public class ArenaSelectionGUI implements Listener {
 
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
-        if (!event.getInventory().getTitle().equals(ChatColor.DARK_BLUE + "Seleziona Arena")) return;
+        if (!event.getInventory().getTitle().equals(messageManager.getArenaSelectionGUITitle())) return;
         if (!(event.getPlayer() instanceof Player)) return;
         Player player = (Player) event.getPlayer();
         // Riapre la GUI principale con un piccolo delay per evitare conflitti con l'evento di chiusura

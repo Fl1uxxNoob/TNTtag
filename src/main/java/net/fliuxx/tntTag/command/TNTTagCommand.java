@@ -14,9 +14,11 @@ import org.bukkit.ChatColor;
 
 public class TNTTagCommand implements CommandExecutor {
     private TNTTagManager manager;
+    private MessageManager messageManager;
 
     public TNTTagCommand(TNTTagManager manager) {
         this.manager = manager;
+        this.messageManager = MessageManager.getInstance();
     }
 
     @Override
@@ -74,7 +76,7 @@ public class TNTTagCommand implements CommandExecutor {
                     return true;
                 }
                 if (manager.isGameActive()) {
-                    player.sendMessage(ChatColor.RED + "Non puoi aprire la GUI mentre la TNTTag è attiva!");
+                    player.sendMessage(messageManager.getGameActiveGUIBlockedMessage());
                     return true;
                 }
                 TNTTagGUI gui = TNTTagGUI.getInstance(manager);

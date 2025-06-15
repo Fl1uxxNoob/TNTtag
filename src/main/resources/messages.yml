@@ -8,3 +8,49 @@ scoreboard:
   players_label: "&a&lGiocatori"
   timer_suffix: "&f: {time}s"
   players_suffix: "&f: {count}"
+
+gui:
+  main:
+    title: "&4&lTNTTag GUI"
+    time_button:
+      name: "&b&lModifica tempo round"
+      lore:
+        - "&7Tempo attuale: {time} sec"
+        - "&7Sinistro: +10 sec, Destro: -10 sec"
+    start_button:
+      name: "&a&lAvvia TNTTag"
+      lore:
+        - "&7Clic sinistro per avviare"
+    arena_button:
+      name: "&d&lSeleziona Arena"
+      lore:
+        - "&7Scegli l'arena per la partita"
+
+  arena_selection:
+    title: "&1&lSeleziona Arena"
+    random_option:
+      name: "&b&lCasuale"
+      lore:
+        - "&7Seleziona un'arena casuale"
+    arena_item:
+      name: "&a&l{arena_name}"
+      lore:
+        - "&7Clicca per selezionare questa arena"
+    navigation:
+      previous_page:
+        name: "&e&lPagina precedente"
+        lore:
+          - "&7Vai alla pagina precedente"
+      next_page:
+        name: "&e&lPagina successiva"
+        lore:
+          - "&7Vai alla pagina successiva"
+
+messages:
+  gui:
+    time_increased: "&aIl tempo del round è stato aumentato a {time} secondi."
+    time_decreased: "&aIl tempo del round è stato diminuito a {time} secondi."
+    arena_selected: "&aHai selezionato l'arena: {arena_name}"
+    random_selected: "&aHai selezionato l'opzione 'Casuale'."
+    cannot_use_now: "&cNon puoi usare questa GUI ora."
+    game_active_gui_blocked: "&cNon puoi aprire la GUI mentre la TNTTag è attiva!"
