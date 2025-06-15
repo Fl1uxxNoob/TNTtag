@@ -238,4 +238,69 @@ public class MessageManager {
     public String getUnknownCommandMessage() {
         return getMessage("messages.commands.unknown_command");
     }
+
+    // Metodi per i messaggi di WorldGuard
+    public String getWorldGuardNotFoundMessage() {
+        return getMessage("messages.worldguard.worldguard_not_found");
+    }
+
+    public String getWorldGuardAccessErrorMessage() {
+        return getMessage("messages.worldguard.worldguard_access_error");
+    }
+
+    public String getNoArenaDefinedMessage() {
+        return getMessage("messages.worldguard.no_arenas_defined");
+    }
+
+    public String getArenaFoundMessage(String arenaName, String worldName) {
+        return getMessage("messages.worldguard.arena_found", new String[]{"arena_name", "world_name"}, new String[]{arenaName, worldName});
+    }
+
+    public String getWorldNotFoundMessage(String worldName, String arenaName) {
+        return getMessage("messages.worldguard.world_not_found", new String[]{"world_name", "arena_name"}, new String[]{worldName, arenaName});
+    }
+
+    public String getApplyingSettingsMessage(String worldName) {
+        return getMessage("messages.worldguard.applying_settings", "world_name", worldName);
+    }
+
+    public String getRegionManagerErrorMessage(String worldName) {
+        return getMessage("messages.worldguard.region_manager_error", "world_name", worldName);
+    }
+
+    public String getGlobalRegionNotFoundMessage(String worldName) {
+        return getMessage("messages.worldguard.global_region_not_found", "world_name", worldName);
+    }
+
+    public String getApplyingFlagsMessage(String worldName) {
+        return getMessage("messages.worldguard.applying_flags", "world_name", worldName);
+    }
+
+    public String getFlagsSavedMessage(String worldName) {
+        return getMessage("messages.worldguard.flags_saved", "world_name", worldName);
+    }
+
+    public String getFlagsSaveErrorMessage(String worldName, String error) {
+        return getMessage("messages.worldguard.flags_save_error", new String[]{"world_name", "error"}, new String[]{worldName, error});
+    }
+
+    public String getFlagsErrorMessage(String worldName, String error) {
+        return getMessage("messages.worldguard.flags_error", new String[]{"world_name", "error"}, new String[]{worldName, error});
+    }
+
+    public String getApplyingGamerulesMessage(String worldName) {
+        return getMessage("messages.worldguard.applying_gamerules", "world_name", worldName);
+    }
+
+    public String getGamerulesAppliedMessage(String worldName) {
+        return getMessage("messages.worldguard.gamerules_applied", "world_name", worldName);
+    }
+
+    public String getGamerulesErrorMessage(String worldName, String error) {
+        return getMessage("messages.worldguard.gamerules_error", new String[]{"world_name", "error"}, new String[]{worldName, error});
+    }
+
+    public String getConfigurationCompletedMessage(int count) {
+        return getMessage("messages.worldguard.configuration_completed", "count", String.valueOf(count));
+    }
 }
