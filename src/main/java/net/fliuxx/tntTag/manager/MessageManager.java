@@ -205,4 +205,37 @@ public class MessageManager {
     public String getGameActiveGUIBlockedMessage() {
         return getMessage("messages.gui.game_active_gui_blocked");
     }
+
+    // Metodi per i messaggi dei comandi
+    public String getPlayerOnlyMessage() {
+        return getMessage("messages.commands.player_only");
+    }
+
+    public String getUsageMessage() {
+        return getMessage("messages.commands.usage");
+    }
+
+    public String getNoPermissionMessage() {
+        return getMessage("messages.commands.no_permission");
+    }
+
+    public String getGameAlreadyActiveMessage() {
+        return getMessage("messages.commands.game_already_active");
+    }
+
+    public String getNoGameActiveMessage() {
+        return getMessage("messages.commands.no_game_active");
+    }
+
+    public String getGameStoppedMessage() {
+        return getMessage("messages.commands.game_stopped");
+    }
+
+    public String getConfigReloadedMessage() {
+        return getMessage("messages.commands.config_reloaded");
+    }
+
+    public String getUnknownCommandMessage() {
+        return getMessage("messages.commands.unknown_command");
+    }
 }

@@ -54,3 +54,13 @@ messages:
     random_selected: "&aHai selezionato l'opzione 'Casuale'."
     cannot_use_now: "&cNon puoi usare questa GUI ora."
     game_active_gui_blocked: "&cNon puoi aprire la GUI mentre la TNTTag è attiva!"
+
+  commands:
+    player_only: "&cQuesto comando può essere eseguito solo da un giocatore."
+    usage: "&eUso: /tnttag <start|stop|reload|gui>"
+    no_permission: "&cNon hai il permesso per eseguire questo comando!"
+    game_already_active: "&cLa partita è già in corso!"
+    no_game_active: "&cNessuna partita in corso!"
+    game_stopped: "&aGioco TNTTag fermato!"
+    config_reloaded: "&aConfigurazione, messaggi, GUI e impostazioni arene ricaricate!"
+    unknown_command: "&eComando non riconosciuto! Uso: /tnttag <start|stop|reload|gui>"
