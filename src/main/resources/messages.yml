@@ -1,0 +1,10 @@
+# Configurazione messaggi per TNTTag Plugin
+# Usa & per i colori (es: &c per rosso, &a per verde, &b per aqua)
+# Usa &l per grassetto, &o per corsivo
+
+scoreboard:
+  title: "&cTNT TAG"
+  timer_label: "&6&lTimer"
+  players_label: "&a&lGiocatori"
+  timer_suffix: "&f: {time}s"
+  players_suffix: "&f: {count}"

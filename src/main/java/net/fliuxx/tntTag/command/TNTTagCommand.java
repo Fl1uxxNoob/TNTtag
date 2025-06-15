@@ -1,6 +1,7 @@
 package net.fliuxx.tntTag.command;
 
 import net.fliuxx.tntTag.gui.ArenaSelectionGUI;
+import net.fliuxx.tntTag.manager.MessageManager;
 import net.fliuxx.tntTag.manager.TNTTagManager;
 import net.fliuxx.tntTag.gui.TNTTagGUI;
 import net.fliuxx.tntTag.worldguard.ArenaWorldGuardManager;
@@ -59,11 +60,13 @@ public class TNTTagCommand implements CommandExecutor {
                     return true;
                 }
                 TntTag.getInstance().reloadConfig();
+                // Ricarica anche i messaggi
+                MessageManager.getInstance().reloadMessages();
                 TNTTagGUI.resetInstance();
                 ArenaSelectionGUI.resetInstance();
                 // Richiama il controllo delle impostazioni delle arene
                 ArenaWorldGuardManager.checkAndApplySettings();
-                player.sendMessage(ChatColor.GREEN + "Configurazione, GUI e impostazioni arene ricaricate!");
+                player.sendMessage(ChatColor.GREEN + "Configurazione, messaggi, GUI e impostazioni arene ricaricate!");
                 break;
             case "gui":
                 if (!player.hasPermission("tnttag.host")) {

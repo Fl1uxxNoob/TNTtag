@@ -1,5 +1,6 @@
 package net.fliuxx.tntTag.scoreboard;
 
+import net.fliuxx.tntTag.manager.MessageManager;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.scoreboard.*;
@@ -9,22 +10,26 @@ public class TNTTagScoreboardManager {
     private Objective objective;
     private Team timerTeam;
     private Team aliveTeam;
+    private MessageManager messageManager;
 
     public TNTTagScoreboardManager() {
+        messageManager = MessageManager.getInstance();
+
         ScoreboardManager sm = Bukkit.getScoreboardManager();
         board = sm.getNewScoreboard();
-        // Il titolo della scoreboard: "TNT TAG" in rosso chiaro
+
+        // Il titolo della scoreboard utilizzando il MessageManager
         objective = board.registerNewObjective("TNTTagObj", "dummy");
-        objective.setDisplayName(ChatColor.RED + "TNT TAG");
+        objective.setDisplayName(messageManager.getScoreboardTitle());
         objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
         // Creiamo due team fissi per il timer e per il conteggio delle vite
         timerTeam = board.registerNewTeam("timerTeam");
         aliveTeam = board.registerNewTeam("aliveTeam");
 
-        // Utilizziamo entry univoche per ciascun team
-        String timerEntry = ChatColor.GOLD.toString() + ChatColor.BOLD + "Timer";
-        String aliveEntry = ChatColor.GREEN.toString() + ChatColor.BOLD + "Giocatori";
+        // Utilizziamo entry univoche per ciascun team usando i messaggi configurabili
+        String timerEntry = messageManager.getScoreboardTimerLabel();
+        String aliveEntry = messageManager.getScoreboardPlayersLabel();
 
         timerTeam.addEntry(timerEntry);
         aliveTeam.addEntry(aliveEntry);
@@ -40,8 +45,8 @@ public class TNTTagScoreboardManager {
      * @param aliveCount il numero di giocatori attivi
      */
     public void updateScoreboard(int timer, int aliveCount) {
-        timerTeam.setSuffix(ChatColor.WHITE + ": " + timer + "s");
-        aliveTeam.setSuffix(ChatColor.WHITE + ": " + aliveCount);
+        timerTeam.setSuffix(messageManager.getScoreboardTimerSuffix(timer));
+        aliveTeam.setSuffix(messageManager.getScoreboardPlayersSuffix(aliveCount));
     }
 
     public Scoreboard getScoreboard() {
